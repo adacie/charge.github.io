@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>夜衝收費管理系統 - 菱米露</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#38bdf8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="夜衝收費">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        :root {
+            --primary-bg: #f0f9ff;
+            --accent-yellow: #fde047;
+            --accent-blue: #0284c7;
+            --primary-green: #0d9488;
+            --primary-green-hover: #0f766e;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --subtext-color: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #16a34a;
+            --success-bg: #f0fdf4;
+            --danger-color: #dc2626;
+            --danger-bg: #fef2f2;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-top: var(--safe-area-top);
+            padding-bottom: calc(30px + var(--safe-area-bottom));
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0b1e36 0%, #112544 100%);
+            color: white;
+            padding: 20px 20px 65px 20px;
+            text-align: left;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.45em;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            margin: 4px 0 0 0;
+            font-size: 0.85em;
+            opacity: 0.85;
+        }
+
+        .logo-floating {
+            position: absolute;
+            right: 10px;
+            bottom: -115px;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            border: 4px solid #ffffff;
+            z-index: 30;
+            background: #fff;
+        }
+
+        .container {
+            padding: 0 12px 12px 12px;
+            max-width: 600px;
+            margin: 60px auto 0 auto;
+            position: relative;
+            z-index: 20;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: var(--card-bg);
+            padding: 16px 8px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+            font-size: 1.15em;
+        }
+
+        .stat-card.paid .stat-icon { background-color: #dcfce7; color: #16a34a; }
+        .stat-card.unpaid .stat-icon { background-color: #fee2e2; color: #dc2626; }
+        .stat-card.total .stat-icon { background-color: #e0f2fe; color: #0284c7; }
+        .stat-card.progress .stat-icon { background-color: #f3e8ff; color: #9333ea; }
+
+        .stat-card .label {
+            font-size: 0.72em;
+            color: var(--subtext-color);
+            margin-bottom: 2px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .stat-card .amount {
+            font-size: 1.05em;
+            font-weight: 800;
+        }
+
+        .stat-card.paid .amount { color: #16a34a; }
+        .stat-card.unpaid .amount { color: #dc2626; }
+        .stat-card.total .amount { color: #0f172a; }
+        .stat-card.progress .amount { color: #0f172a; }
+
+        .action-card {
+            background: white;
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .action-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .safe-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: #f0fdf4;
+            color: #16a34a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25em;
+            flex-shrink: 0;
+            border: 1px solid #bbf7d0;
+        }
+
+        .action-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+        }
+
+        .action-tip {
+            font-size: 0.78em;
+            color: var(--subtext-color);
+            margin-bottom: 2px;
+        }
+
+        .last-saved {
+            font-size: 0.88em;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 11px 14px;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.95em;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .action-btn.add-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .action-btn:active {
+            opacity: 0.9;
+            transform: scale(0.96);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 0.95em;
+            background: white;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .tabs {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 14px;
+        }
+
+        .tabs button {
+            flex: 1;
+            padding: 9px 0;
+            border: none;
+            background: transparent;
+            color: var(--subtext-color);
+            font-size: 0.88em;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .tabs button.active {
+            background: white;
+            color: var(--accent-blue);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            position: relative;
+        }
+
+        .item-card.paid {
+            background: var(--success-bg);
+            border-color: #bbf7d0;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox-wrapper {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .item-card.paid .checkbox-wrapper {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .checkbox-wrapper::after {
+            content: "✓";
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .item-card.paid .checkbox-wrapper::after {
+            display: block;
+        }
+
+        .item-name {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .tag {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .tag.hotel { background: #e0f2fe; color: #0284c7; }
+        .tag.camp { background: #fef3c7; color: #b45309; }
+
+        .item-sub {
+            font-size: 0.8em;
+            color: var(--subtext-color);
+            margin-top: 2px;
+        }
+
+        .item-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .item-price { font-size: 1.1em; font-weight: 800; color: var(--text-main); }
+
+        .status-badge {
+            font-size: 0.7em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .status-badge.paid { color: var(--success-color); background: #dcfce7; }
+        .status-badge.unpaid { color: var(--danger-color); background: var(--danger-bg); }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--subtext-color);
+            font-size: 1em;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger-bg);
+            color: var(--danger-color);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-card h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 1.25em;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 0.82em;
+            font-weight: 700;
+            color: var(--subtext-color);
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95em;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            padding: 10px 18px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 20px;
+            font-weight: 700;
+            color: var(--subtext-color);
+            cursor: pointer;
+        }
+
+        .btn-confirm {
+            padding: 10px 18px;
+            border: none;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+    </style>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1>夜衝收費管理系統</h1>
+        <p>《 09/11-09/13 》 新竹小叮噹中秋團圓</p>
+        <!-- 使用 GitHub Raw 原始圖片連結 -->
+        <img id="logoImage" alt="菱米露露營 Logo" class="logo-floating" src="https://raw.githubusercontent.com/adacie/charge.github.io/main/%E8%8F%B1%E7%B1%B3%E9%9C%B2logo.jpg">
+    </div>
+</header>
+
+<div class="container">
+    <div class="stats-grid">
+        <div class="stat-card paid">
+            <div class="stat-icon">👛</div>
+            <span class="label">已收金額</span>
+            <span class="amount" id="totalPaid">$0</span>
+        </div>
+        <div class="stat-card unpaid">
+            <div class="stat-icon">💰</div>
+            <span class="label">待收金額</span>
+            <span class="amount" id="totalUnpaid">$0</span>
+        </div>
+        <div class="stat-card total">
+            <div class="stat-icon">📊</div>
+            <span class="label">預計總金額</span>
+            <span class="amount" id="totalAmount">$0</span>
+        </div>
+        <div class="stat-card progress">
+            <div class="stat-icon">📋</div>
+            <span class="label">收費進度</span>
+            <span class="amount" id="progressCount">0 / 0</span>
+        </div>
+    </div>
+
+    <div class="action-card">
+        <div class="action-left">
+            <div class="safe-icon">🔐</div>
+            <div class="action-info">
+                <div class="action-tip">最後更新時間：</div>
+                <div class="last-saved"><span id="lastSavedTime">載入中...</span></div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn add-btn" onclick="openAddModal()">
+                <span>➕</span> 新增
+            </button>
+            <button class="action-btn" onclick="submitChanges()">
+                <span>🔄</span> 更新
+            </button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 搜尋姓名、房型、營位或備註..." onkeyup="renderList()" autocomplete="off">
+        </div>
+        <div class="tabs">
+            <button class="active" onclick="filterData('all', event)">全部</button>
+            <button onclick="filterData('住宿', event)">住宿夜衝</button>
+            <button onclick="filterData('搭帳', event)">搭帳夜衝</button>
+        </div>
+    </div>
+
+    <div id="listContainer" class="list-container"></div>
+</div>
+
+<!-- 新增名單彈窗 -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-card">
+        <h2>➕ 新增夜衝名單</h2>
+        <form id="addForm" onsubmit="handleAddSubmit(event)">
+            <div class="form-group">
+                <label>類型</label>
+                <select id="addType" required>
+                    <option value="住宿">住宿</option>
+                    <option value="搭帳">搭帳</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>類別 / 區域 (例如：4人房、草皮區)</label>
+                <input type="text" id="addCategory" placeholder="請輸入房型或營地區域" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="addName" placeholder="請輸入姓名" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>數量 (例如：1間、1帳)</label>
+                <input type="text" id="addCount" placeholder="例如: 1間 或 1帳" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>金額 (NT$)</label>
+                <input type="number" id="addPrice" placeholder="請輸入金額" min="0" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>備註 (例如：房號、營位編號)</label>
+                <input type="text" id="addNote" placeholder="選填，例如: 1F, 工作人員" autocomplete="off">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeAddModal()">取消</button>
+                <button type="submit" class="btn-confirm">確定新增</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const SAVE_PASSWORD = "0912";
+    const GROUP_KEY = "camp0912";
+
+    const SUPABASE_URL = "https://anupgjdironyphurxpiq.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_uAK0quXNwPHCNd2GBzJApQ_BsAjGiHW";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const initialData = [
+        { id: 1, type: "住宿", category: "3人房", name: "yungfang", count: "1間", price: 1800, note: "5F", paid: false },
+        { id: 2, type: "住宿", category: "4人房", name: "曉隸(4人)", count: "1間", price: 2220, note: "工作人員", paid: false },
+        { id: 3, type: "住宿", category: "4人房", name: "綸綸", count: "1間", price: 2220, note: "5F", paid: false },
+        { id: 4, type: "住宿", category: "4人房", name: "球球", count: "1間", price: 2220, note: "工作人員", paid: false },
+        { id: 5, type: "住宿", category: "5人房", name: "米倫/可可", count: "1間", price: 2640, note: "工作人員", paid: false },
+        { id: 6, type: "住宿", category: "5人房", name: "志明/宏哥", count: "1間", price: 2640, note: "工作人員", paid: false },
+        { id: 7, type: "住宿", category: "4人升等房", name: "沛君", count: "1間", price: 2640, note: "1F", paid: false },
+        { id: 8, type: "住宿", category: "6人房", name: "靜/菱", count: "1間", price: 3060, note: "工作人員", paid: false },
+        { id: 9, type: "住宿", category: "7人房", name: "潔/潘", count: "1間", price: 3480, note: "工作人員", paid: false },
+        { id: 10, type: "住宿", category: "8人房", name: "susan", count: "1間", price: 3900, note: "3F", paid: false },
+        { id: 11, type: "搭帳", category: "草皮區", name: "33", count: "1帳", price: 700, note: "1", paid: false },
+        { id: 12, type: "搭帳", category: "草皮區", name: "33", count: "1帳", price: 700, note: "2", paid: false },
+        { id: 13, type: "搭帳", category: "草皮區", name: "漢雯", count: "1帳", price: 700, note: "14", paid: false },
+        { id: 14, type: "搭帳", category: "草皮區", name: "漢雯", count: "1帳", price: 700, note: "15", paid: false },
+        { id: 15, type: "搭帳", category: "草皮區", name: "沛君", count: "1帳", price: 700, note: "16", paid: false },
+        { id: 16, type: "搭帳", category: "草皮B區", name: "少偉", count: "1帳", price: 700, note: "14", paid: false },
+        { id: 17, type: "搭帳", category: "草皮B區", name: "張銚", count: "1帳", price: 700, note: "16", paid: false },
+        { id: 18, type: "搭帳", category: "草皮B區", name: "Emma", count: "1帳", price: 700, note: "17", paid: false },
+        { id: 19, type: "搭帳", category: "草皮B區", name: "Emma", count: "1帳", price: 700, note: "18", paid: false },
+        { id: 20, type: "搭帳", category: "草皮B區", name: "張庭瑄", count: "1帳", price: 700, note: "20", paid: false },
+        { id: 21, type: "搭帳", category: "草皮B區", name: "張庭瑄", count: "1帳", price: 700, note: "21", paid: false },
+        { id: 22, type: "搭帳", category: "草皮B區", name: "SiaoKing", count: "1帳", price: 700, note: "24", paid: false },
+        { id: 23, type: "搭帳", category: "草皮B區", name: "Q", count: "1帳", price: 700, note: "29", paid: false },
+        { id: 24, type: "搭帳", category: "雨棚區", name: "Vivian rose", count: "1帳", price: 800, note: "4", paid: false },
+        { id: 25, type: "搭帳", category: "雨棚區", name: "Vivian rose", count: "1帳", price: 800, note: "5", paid: false },
+        { id: 26, type: "搭帳", category: "雨棚區", name: "小幼", count: "1帳", price: 800, note: "12", paid: false },
+        { id: 27, type: "搭帳", category: "雨棚區", name: "妍里Lily", count: "1帳", price: 800, note: "13", paid: false },
+        { id: 28, type: "搭帳", category: "雨棚區", name: "Angel Chang", count: "1帳", price: 800, note: "15", paid: false },
+        { id: 29, type: "搭帳", category: "雨棚區", name: "淑貞", count: "1帳", price: 800, note: "16", paid: false },
+        { id: 30, type: "搭帳", category: "雨棚區", name: "建宏", count: "1帳", price: 800, note: "20", paid: false },
+        { id: 31, type: "搭帳", category: "車露區", name: "Anna", count: "1帳", price: 700, note: "右2", paid: false },
+        { id: 32, type: "搭帳", category: "車露區", name: "璨葶 Leah", count: "1帳", price: 700, note: "左2", paid: false },
+        { id: 33, type: "搭帳", category: "車露區", name: "璨葶 Leah", count: "1帳", price: 700, note: "左2", paid: false },
+        { id: 34, type: "搭帳", category: "車露區", name: "Vic Chung", count: "1帳", price: 700, note: "左5", paid: false }
+    ];
+
+    let data = JSON.parse(JSON.stringify(initialData));
+    let lastSavedTime = '未儲存';
+
+    function formatTime(d) {
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        const date = d.getDate();
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? '下午' : '上午';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${year}/${month}/${date} ${ampm}${hours}:${minutes}:${seconds}`;
+    }
+
+    function updateTimeDisplay() {
+        document.getElementById('lastSavedTime').innerText = lastSavedTime;
+    }
+
+    async function loadFromSupabase() {
+        try {
+            const { data: resData, error } = await supabaseClient
+                .from('camp_data')
+                .select('data, updated_at')
+                .eq('group_key', GROUP_KEY)
+                .single();
+
+            if (resData && resData.data) {
+                data = resData.data;
+                if (resData.updated_at) {
+                    lastSavedTime = formatTime(new Date(resData.updated_at));
+                }
+            } else {
+                await saveToSupabase();
+            }
+        } catch (e) {
+            console.error("Supabase 讀取異常:", e);
+        } finally {
+            updateTimeDisplay();
+            renderList();
+        }
+    }
+
+    function initRealtimeSync() {
+        supabaseClient
+            .channel('realtime_camp_sync')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'camp_data',
+                    filter: `group_key=eq.${GROUP_KEY}`
+                },
+                (payload) => {
+                    if (payload.new && payload.new.data) {
+                        data = payload.new.data;
+                        if (payload.new.updated_at) {
+                            lastSavedTime = formatTime(new Date(payload.new.updated_at));
+                        }
+                        updateTimeDisplay();
+                        renderList();
+                    }
+                }
+            )
+            .subscribe();
+    }
+
+    async function saveToSupabase() {
+        const now = new Date();
+        const { error } = await supabaseClient
+            .from('camp_data')
+            .upsert({ 
+                group_key: GROUP_KEY, 
+                data: data,
+                updated_at: now.toISOString()
+            }, { onConflict: 'group_key' });
+
+        if (error) {
+            console.error("Supabase 儲存失敗:", error);
+            alert("❌ 雲端儲存失敗，請檢查網路連線！");
+            return false;
+        }
+
+        lastSavedTime = formatTime(now);
+        updateTimeDisplay();
+        return true;
+    }
+
+    let currentFilter = 'all';
+
+    function renderList() {
+        const container = document.getElementById('listContainer');
+        const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        container.innerHTML = '';
+
+        let totalPaid = 0, totalUnpaid = 0, paidCount = 0;
+
+        data.forEach((item) => {
+            if (item.paid) { totalPaid += item.price; paidCount++; }
+            else { totalUnpaid += item.price; }
+
+            const matchesFilter = currentFilter === 'all' || item.type === currentFilter;
+            const matchesSearch = item.name.toLowerCase().includes(searchKeyword) || 
+                                  item.category.toLowerCase().includes(searchKeyword) ||
+                                  (item.note && item.note.toLowerCase().includes(searchKeyword));
+
+            if (matchesFilter && matchesSearch) {
+                const card = document.createElement('div');
+                card.className = `item-card ${item.paid ? 'paid' : ''}`;
+                card.onclick = () => togglePaid(item.id);
+
+                const tagClass = item.type === '住宿' ? 'hotel' : 'camp';
+
+                card.innerHTML = `
+                    <div class="item-left">
+                        <div class="checkbox-wrapper"></div>
+                        <div class="item-info">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="item-name">${item.name}</span>
+                                <span class="tag ${tagClass}">${item.type}</span>
+                            </div>
+                            <div class="item-sub">
+                                <span>${item.category} (${item.count})</span>
+                                ${item.note ? `<span>• 備註：${item.note}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="item-price">$${item.price.toLocaleString()}</span>
+                            <button class="delete-btn" onclick="deleteItem(${item.id}, event)" title="刪除此筆記錄">🗑️</button>
+                        </div>
+                        <div><span class="status-badge ${item.paid ? 'paid' : 'unpaid'}">${item.paid ? '已繳費' : '未繳費'}</span></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        });
+
+        document.getElementById('totalPaid').innerText = `$${totalPaid.toLocaleString()}`;
+        document.getElementById('totalUnpaid').innerText = `$${totalUnpaid.toLocaleString()}`;
+        document.getElementById('totalAmount').innerText = `$${(totalPaid + totalUnpaid).toLocaleString()}`;
+        document.getElementById('progressCount').innerText = `${paidCount} / ${data.length}`;
+    }
+
+    function togglePaid(id) {
+        const item = data.find(i => i.id === id);
+        if (item) {
+            item.paid = !item.paid;
+            renderList();
+        }
+    }
+
+    async function deleteItem(id, event) {
+        event.stopPropagation();
+
+        const item = data.find(i => i.id === id);
+        if (!item) return;
+
+        if (!confirm(`⚠️ 確定要刪除「${item.name} - ${item.category}」這筆夜衝記錄嗎？`)) {
+            return;
+        }
+
+        const inputPass = prompt("🔐 請輸入密碼以進行刪除操作");
+        if (inputPass === null) return;
+
+        if (inputPass !== SAVE_PASSWORD) {
+            alert("❌ 密碼錯誤，無法刪除！");
+            return;
+        }
+
+        data = data.filter(i => i.id !== id);
+
+        const success = await saveToSupabase();
+        if (success) {
+            alert("✅ 已成功刪除！系統即將重新整理頁面。");
+            location.reload();
+        } else {
+            renderList();
+        }
+    }
+
+    async function submitChanges() {
+        const inputPass = prompt("🔐 請輸入密碼以進行雲端儲存");
+        if (inputPass === null) return;
+
+        if (inputPass !== SAVE_PASSWORD) {
+            alert("❌ 密碼錯誤，無法儲存！");
+            return;
+        }
+
+        const success = await saveToSupabase();
+        if (success) {
+            alert("✅ 雲端儲存成功，其他人將同步看到最新內容！");
+        }
+    }
+
+    function filterData(filter, event) {
+        currentFilter = filter;
+        document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+        if (event) event.target.classList.add('active');
+        renderList();
+    }
+
+    function openAddModal() {
+        const inputPass = prompt("🔐 請輸入密碼以進行新增操作");
+        if (inputPass === null) return;
+
+        if (inputPass !== SAVE_PASSWORD) {
+            alert("❌ 密碼錯誤！");
+            return;
+        }
+
+        document.getElementById('addForm').reset();
+        document.getElementById('addModal').classList.add('active');
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+    }
+
+    async function handleAddSubmit(e) {
+        e.preventDefault();
+
+        const maxId = data.reduce((max, item) => (item.id > max ? item.id : max), 0);
+        const newItem = {
+            id: maxId + 1,
+            type: document.getElementById('addType').value,
+            category: document.getElementById('addCategory').value.trim(),
+            name: document.getElementById('addName').value.trim(),
+            count: document.getElementById('addCount').value.trim(),
+            price: Number(document.getElementById('addPrice').value) || 0,
+            note: document.getElementById('addNote').value.trim(),
+            paid: false
+        };
+
+        data.push(newItem);
+        closeAddModal();
+
+        const success = await saveToSupabase();
+        if (success) {
+            alert("✅ 新增成功！系統即將重新整理頁面。");
+            location.reload();
+        } else {
+            renderList();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromSupabase();
+        initRealtimeSync();
+    });
+</script>
+</body>
+</html>
