@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>夜衝收費管理（camp0912 多人同步版）</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="夜衝收費">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --subtext-color: #7f8c8d;
+            --border-color: #e2e8f0;
+            --success-color: #27ae60;
+            --success-bg: #e8f8f5;
+            --danger-color: #e74c3c;
+            --danger-bg: #fadbd8;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            padding-top: var(--safe-area-top);
+            padding-bottom: calc(70px + var(--safe-area-bottom));
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.15em;
+            font-weight: 600;
+        }
+
+        header p {
+            margin: 4px 0 0 0;
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+
+        .container {
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .config-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .config-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.95em;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sync-status {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #eee;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .sync-status.online { background: #d4edda; color: #155724; }
+        .sync-status.offline { background: #f8d7da; color: #721c24; }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85em;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 12px 14px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card .label {
+            font-size: 0.75em;
+            color: var(--subtext-color);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .amount {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card.paid .amount { color: var(--success-color); }
+        .stat-card.unpaid .amount { color: var(--danger-color); }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95em;
+            background: white;
+            outline: none;
+        }
+
+        .tabs {
+            display: flex;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 10px;
+        }
+
+        .tabs button {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            background: transparent;
+            color: var(--subtext-color);
+            font-size: 0.85em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tabs button.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .item-card.paid {
+            background: var(--success-bg);
+            border-color: #a3e4d7;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox-wrapper {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .item-card.paid .checkbox-wrapper {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .checkbox-wrapper::after {
+            content: "✓";
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .item-card.paid .checkbox-wrapper::after {
+            display: block;
+        }
+
+        .item-name {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .tag {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .tag.hotel { background: #e0f2fe; color: #0369a1; }
+        .tag.camp { background: #fef3c7; color: #b45309; }
+
+        .item-sub {
+            font-size: 0.8em;
+            color: var(--subtext-color);
+            margin-top: 2px;
+        }
+
+        .item-right { text-align: right; }
+        .item-price { font-size: 1.1em; font-weight: 700; color: var(--primary-color); }
+
+        .status-badge {
+            font-size: 0.7em;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .status-badge.paid { color: var(--success-color); background: #d4edda; }
+        .status-badge.unpaid { color: var(--danger-color); background: var(--danger-bg); }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>夜衝收費管理系統</h1>
+    <p>新竹小叮噹中秋團圓（雲端多人即時同步）</p>
+</header>
+
+<div class="container">
+    <div class="config-card">
+        <h3>
+            <span>☁️ 雲端同步狀態</span>
+            <span id="syncStatus" class="sync-status offline">尚未連線（本機模式）</span>
+        </h3>
+        
+        <div class="input-group">
+            <input type="text" id="groupKeyInput" value="camp0912" placeholder="請輸入群組代碼">
+            <button class="btn" onclick="connectFirebase()">開啟同步</button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card paid">
+            <span class="label">已收金額</span>
+            <span class="amount" id="totalPaid">$0</span>
+        </div>
+        <div class="stat-card unpaid">
+            <span class="label">待收金額</span>
+            <span class="amount" id="totalUnpaid">$0</span>
+        </div>
+        <div class="stat-card">
+            <span class="label">預計總金額</span>
+            <span class="amount" id="totalAmount">$0</span>
+        </div>
+        <div class="stat-card">
+            <span class="label">收費進度</span>
+            <span class="amount" id="progressCount">0 / 0</span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 搜尋姓名、房型、營位或備註..." onkeyup="renderList()">
+        </div>
+        <div class="tabs">
+            <button class="active" onclick="filterData('all', event)">全部</button>
+            <button onclick="filterData('住宿', event)">住宿夜衝</button>
+            <button onclick="filterData('搭帳', event)">搭帳夜衝</button>
+        </div>
+    </div>
+
+    <div id="listContainer" class="list-container"></div>
+</div>
+
+<script>
+    const initialData = [
+        { id: 1, type: "住宿", category: "3人房", name: "yungfang", count: "1間", price: 1800, note: "", paid: false },
+        { id: 2, type: "住宿", category: "4人房", name: "曉隸(4人)", count: "1間", price: 2220, note: "I", paid: false },
+        { id: 3, type: "住宿", category: "4人房", name: "綸綸", count: "1間", price: 2220, note: "", paid: false },
+        { id: 4, type: "住宿", category: "4人房", name: "球球", count: "1間", price: 2220, note: "I", paid: false },
+        { id: 5, type: "住宿", category: "5人房", name: "米倫/可可", count: "1間", price: 2640, note: "I", paid: false },
+        { id: 6, type: "住宿", category: "5人房", name: "志明/宏哥", count: "1間", price: 2640, note: "I", paid: false },
+        { id: 7, type: "住宿", category: "4人升等房", name: "沛君", count: "1間", price: 2640, note: "", paid: false },
+        { id: 8, type: "住宿", category: "6人房", name: "靜/菱", count: "1間", price: 3060, note: "1F / I", paid: false },
+        { id: 9, type: "住宿", category: "7人房", name: "潔/潘", count: "1間", price: 3480, note: "1F / I", paid: false },
+        { id: 10, type: "住宿", category: "8人房", name: "susan", count: "1間", price: 3900, note: "3F", paid: false },
+        { id: 11, type: "搭帳", category: "草皮區", name: "33", count: "1帳", price: 700, note: "1", paid: false },
+        { id: 12, type: "搭帳", category: "草皮區", name: "33", count: "1帳", price: 700, note: "2", paid: false },
+        { id: 13, type: "搭帳", category: "草皮區", name: "漢雯", count: "1帳", price: 700, note: "14", paid: false },
+        { id: 14, type: "搭帳", category: "草皮區", name: "漢雯", count: "1帳", price: 700, note: "15", paid: false },
+        { id: 15, type: "搭帳", category: "草皮區", name: "沛君", count: "1帳", price: 700, note: "16", paid: false },
+        { id: 16, type: "搭帳", category: "草皮B區", name: "少偉", count: "1帳", price: 700, note: "14", paid: false },
+        { id: 17, type: "搭帳", category: "草皮B區", name: "張銚", count: "1帳", price: 700, note: "16", paid: false },
+        { id: 18, type: "搭帳", category: "草皮B區", name: "Emma", count: "1帳", price: 700, note: "17", paid: false },
+        { id: 19, type: "搭帳", category: "草皮B區", name: "Emma", count: "1帳", price: 700, note: "18", paid: false },
+        { id: 20, type: "搭帳", category: "草皮B區", name: "張庭瑄", count: "1帳", price: 700, note: "20", paid: false },
+        { id: 21, type: "搭帳", category: "草皮B區", name: "張庭瑄", count: "1帳", price: 700, note: "21", paid: false },
+        { id: 22, type: "搭帳", category: "草皮B區", name: "SiaoKing", count: "1帳", price: 700, note: "24", paid: false },
+        { id: 23, type: "搭帳", category: "草皮B區", name: "Q", count: "1帳", price: 700, note: "29", paid: false },
+        { id: 24, type: "搭帳", category: "雨棚區", name: "Vivian rose", count: "1帳", price: 800, note: "4", paid: false },
+        { id: 25, type: "搭帳", category: "雨棚區", name: "Vivian rose", count: "1帳", price: 800, note: "5", paid: false },
+        { id: 26, type: "搭帳", category: "雨棚區", name: "小幼", count: "1帳", price: 800, note: "12", paid: false },
+        { id: 27, type: "搭帳", category: "雨棚區", name: "妍里Lily", count: "1帳", price: 800, note: "13", paid: false },
+        { id: 28, type: "搭帳", category: "雨棚區", name: "Angel Chang", count: "1帳", price: 800, note: "15", paid: false },
+        { id: 29, type: "搭帳", category: "雨棚區", name: "淑貞", count: "1帳", price: 800, note: "16", paid: false },
+        { id: 30, type: "搭帳", category: "雨棚區", name: "建宏", count: "1帳", price: 800, note: "20", paid: false },
+        { id: 31, type: "搭帳", category: "車露區", name: "Anna", count: "1帳", price: 700, note: "右2", paid: false },
+        { id: 32, type: "搭帳", category: "車露區", name: "璨葶 Leah", count: "1帳", price: 700, note: "左2", paid: false },
+        { id: 33, type: "搭帳", category: "車露區", name: "璨葶 Leah", count: "1帳", price: 700, note: "左2", paid: false },
+        { id: 34, type: "搭帳", category: "車露區", name: "Vic Chung", count: "1帳", price: 700, note: "左5", paid: false }
+    ];
+
+    let data = JSON.parse(localStorage.getItem('night_stay_pwa_data')) || initialData;
+    let dbRef = null;
+
+    const firebaseConfig = {
+        databaseURL: "https://pwa-camp-default-rtdb.firebaseio.com"
+    };
+
+    function connectFirebase() {
+        const groupKey = document.getElementById('groupKeyInput').value.trim();
+        if (!groupKey) { alert('請輸入群組代碼！'); return; }
+
+        try {
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+            dbRef = firebase.database().ref('events/' + groupKey);
+
+            dbRef.on('value', (snapshot) => {
+                const cloudData = snapshot.val();
+                if (cloudData) {
+                    data = cloudData;
+                    localStorage.setItem('night_stay_pwa_data', JSON.stringify(data));
+                    renderList();
+                } else {
+                    dbRef.set(data);
+                }
+                const statusElem = document.getElementById('syncStatus');
+                statusElem.innerText = `已連線（群組: ${groupKey}）`;
+                statusElem.className = 'sync-status online';
+            });
+        } catch (e) {
+            alert('雲端連線失敗，請確認網路！');
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('night_stay_pwa_data', JSON.stringify(data));
+        if (dbRef) { dbRef.set(data); }
+    }
+
+    let currentFilter = 'all';
+
+    function renderList() {
+        const container = document.getElementById('listContainer');
+        const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
+        container.innerHTML = '';
+
+        let totalPaid = 0, totalUnpaid = 0, paidCount = 0;
+
+        data.forEach((item, index) => {
+            if (item.paid) { totalPaid += item.price; paidCount++; }
+            else { totalUnpaid += item.price; }
+
+            const matchesFilter = currentFilter === 'all' || item.type === currentFilter;
+            const matchesSearch = item.name.toLowerCase().includes(searchKeyword) || 
+                                  item.category.toLowerCase().includes(searchKeyword) ||
+                                  (item.note && item.note.toLowerCase().includes(searchKeyword));
+
+            if (matchesFilter && matchesSearch) {
+                const card = document.createElement('div');
+                card.className = `item-card ${item.paid ? 'paid' : ''}`;
+                card.onclick = () => togglePaid(index);
+
+                const tagClass = item.type === '住宿' ? 'hotel' : 'camp';
+
+                card.innerHTML = `
+                    <div class="item-left">
+                        <div class="checkbox-wrapper"></div>
+                        <div class="item-info">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="item-name">${item.name}</span>
+                                <span class="tag ${tagClass}">${item.type}</span>
+                            </div>
+                            <div class="item-sub">
+                                <span>${item.category} (${item.count})</span>
+                                ${item.note ? `<span>• 備註: ${item.note}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-price">$${item.price.toLocaleString()}</span>
+                        <div><span class="status-badge ${item.paid ? 'paid' : 'unpaid'}">${item.paid ? '已繳費' : '未繳費'}</span></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        });
+
+        document.getElementById('totalPaid').innerText = `$${totalPaid.toLocaleString()}`;
+        document.getElementById('totalUnpaid').innerText = `$${totalUnpaid.toLocaleString()}`;
+        document.getElementById('totalAmount').innerText = `$${(totalPaid + totalUnpaid).toLocaleString()}`;
+        document.getElementById('progressCount').innerText = `${paidCount} / ${data.length}`;
+    }
+
+    function togglePaid(index) {
+        data[index].paid = !data[index].paid;
+        saveData();
+        renderList();
+    }
+
+    function filterData(filter, event) {
+        currentFilter = filter;
+        document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+        if (event) event.target.classList.add('active');
+        renderList();
+    }
+
+    renderList();
+</script>
+</body>
+</html>
